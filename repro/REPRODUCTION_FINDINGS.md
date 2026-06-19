@@ -1,5 +1,27 @@
 # MINJA (2503.03704v5) — Reproduction & Failure-Case Report (DeepSeek-V3.2-Exp)
 
+## TL;DR (mapped to the 4 questions)
+
+- **哪里复现不了 (not reproducible):** RAP/WebShop entirely (needs a live WebShop server +
+  HF embeddings, both network-blocked); EHR `SQLInterpreter` (ships an empty placeholder
+  DB); the embedding-ablation (Fig.3, HF-blocked). Plus **13 places where the released code
+  ≠ the paper's described setup** (§A) — most importantly QA retrieval is **Levenshtein**,
+  not the paper's `ada-002`, and QA UD isn't even implemented.
+- **哪个 workflow 掉点 (which loses points):** **EHRAgent collapses** on DeepSeek-V3.2 +
+  released artifacts — ASR 57→**0**, ISR 95.6→**8–17** (§C). In QA, the **law (10%)** and
+  **security (40%)** pairs collapse while simple-subject pairs stay 90–100%.
+- **哪个假设不稳 (unstable assumption):** the paper's claim that ASR variance is "inherent
+  pair differences, **not** instability of MINJA" (§5.2) — our QA ASR sd is **26.7 vs 19.1**
+  and worst-case **10 vs 40**, and the variance is clearly driven by the *retrieval method*
+  and *task complexity*. Also "**generalizes to capable reasoning models**" (paper's RQ2,
+  DeepSeek-R1) holds for QA-on-average but **fails for EHR** with DeepSeek-V3.2.
+- **哪个指标对不上 (metric mismatch):** EHR ISR/ASR (8/0 vs 95.6/57) — huge. QA ASR spread
+  (min 10 vs paper min 40) and ISR (96.7 vs 100). The EHR strict metric is also
+  model-dependent (DeepSeek's victim-naming comments inflate "misses").
+
+---
+
+
 Model: `Pro/deepseek-ai/DeepSeek-V3.2-Exp` via SiliconFlow (`https://api.siliconflow.cn/v1`).
 Network: only `api.siliconflow.cn` reachable (HuggingFace, OpenAI, WebShop servers all blocked).
 
@@ -138,8 +160,16 @@ Root causes, all evidenced in the generated code (not a metric artifact):
 4. **`SQLInterpreter` is dead** (empty placeholder `mimic_iii.db`) → episodes that try SQL
    crash with `DatabaseError('file is not a database')`, derailing the solution.
 
-(13837→3125 errored on a transient embedding DNS blip — no retry in v1; re-run with the
-fixed harness is in progress. The collapse pattern is consistent across pairs.)
+**Fair attribution (caveats).** The EHR collapse is a *combination* of: (a) DeepSeek's
+exploratory coding style; (b) **released-artifact problems** — the shipped MIMIC-III is
+truncated and `mimic_iii.db` is empty, so the agent cannot get clean executions and flails;
+(c) our adaptations (autogen→explicit loop, MiniLM→BGE — though the paper's Fig.3 shows BGE
+is fine, and the loop is faithful to `max_consecutive_auto_reply=1`). So this is *not* proof
+that "MINJA can never work on DeepSeek"; it is evidence that, **on the released artifacts
+with a different (capable) model, the EHR result does not reproduce** — the cleanest
+model-comparison is QA (§B), which uses complete data and shows mean-reproduces /
+stability-degrades. Transient `PermissionDeniedError('Host resolves to a private/reserved
+IP')` from the SiliconFlow endpoint was also an intermittent obstacle (needs retry).
 
 ---
 
