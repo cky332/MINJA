@@ -173,3 +173,4 @@ rap/webshop/user_session_logs/
 rap/webshop/search_engine/indexes*/
 rap/webshop/search_engine/resources*/
 rap/webshop/search_engine/*.ser
+repro/logs/
