@@ -50,8 +50,14 @@ def chat(messages, tools=None, tool_choice=None, temperature=0, max_tokens=1500)
             time.sleep(2 ** attempt)
 
 def embed(texts):
-    r = client().embeddings.create(model=EMB_MODEL, input=texts)
-    return [d.embedding for d in r.data]
+    for attempt in range(6):
+        try:
+            r = client().embeddings.create(model=EMB_MODEL, input=texts)
+            return [d.embedding for d in r.data]
+        except Exception as e:
+            if attempt == 5:
+                raise
+            time.sleep(2 ** attempt)
 
 def cos(a, b):
     a = np.array(a); b = np.array(b)
