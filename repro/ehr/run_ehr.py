@@ -49,15 +49,23 @@ def chat(messages, tools=None, tool_choice=None, temperature=0, max_tokens=1500)
                 raise
             time.sleep(2 ** attempt)
 
+_emb_cache = {}
+_emb_lock = threading.Lock()
 def embed(texts):
-    for attempt in range(6):
-        try:
-            r = client().embeddings.create(model=EMB_MODEL, input=texts)
-            return [d.embedding for d in r.data]
-        except Exception as e:
-            if attempt == 5:
-                raise
-            time.sleep(2 ** attempt)
+    miss = [t for t in texts if t not in _emb_cache]
+    if miss:
+        for attempt in range(6):
+            try:
+                r = client().embeddings.create(model=EMB_MODEL, input=miss)
+                with _emb_lock:
+                    for t, d in zip(miss, r.data):
+                        _emb_cache[t] = d.embedding
+                break
+            except Exception as e:
+                if attempt == 5:
+                    raise
+                time.sleep(2 ** attempt)
+    return [_emb_cache[t] for t in texts]
 
 def cos(a, b):
     a = np.array(a); b = np.array(b)
