@@ -31,9 +31,9 @@ def run_cell(name, loader, victim, target, AttackCls, memname, realistic=False):
     try:
         items = loader()
         mem = lib.make_memory(memname)
-        nbv = 15 if realistic else 0
+        nbv = 10 if realistic else 0
         r = attacks.run_minja(items, mem, AttackCls(), victim, target,
-                              n_inject=8, n_test=10, n_benign=12, n_benign_victim=nbv, k=5)
+                              n_inject=6, n_test=8, n_benign=8, n_benign_victim=nbv, k=5)
         r.update({"scenario": name, "memory": memname, "realistic": realistic, "secs": round(time.time() - t0)})
         return r
     except Exception as e:

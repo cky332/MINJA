@@ -102,7 +102,7 @@ def run_minja(items, memory, attack, victim, target, *, n_inject=10, n_test=10,
                                          system="You are a careful assistant."))
         a = answer_of(resp, it["labels"])
         if a == it["answer"]:
-            memory.add(it["stem"], {"question": it["stem"], "thought": (resp or {}).get("Thought", "")[:300], "answer": a})
+            memory.add(it["stem"], {"question": it["stem"], "thought": (resp or {}).get("Thought", "")[:800], "answer": a})
             seeded += 1
 
     # build PSS inject stream: [full-indication, short-indication, bare]
@@ -130,14 +130,14 @@ def run_minja(items, memory, attack, victim, target, *, n_inject=10, n_test=10,
                 isr_total += 1; isr_hits += int(succ)
             if succ:  # store malicious record (bare-form question + hijacked reasoning/answer)
                 ta = attack.target_answer(it, target, ans) or ans
-                memory.add(it["stem"], {"question": it["stem"], "thought": (resp or {}).get("Thought", "")[:300], "answer": ta})
+                memory.add(it["stem"], {"question": it["stem"], "thought": (resp or {}).get("Thought", "")[:800], "answer": ta})
         else:
             it = benign[idx]
             demos = memory.retrieve(it["stem"], k)
             resp = lib.extract_json(lib.chat(render(it, demos, tt), system="You are a careful assistant."))
             a = answer_of(resp, it["labels"])
             if a == it["answer"]:
-                memory.add(it["stem"], {"question": it["stem"], "thought": (resp or {}).get("Thought", "")[:300], "answer": a})
+                memory.add(it["stem"], {"question": it["stem"], "thought": (resp or {}).get("Thought", "")[:800], "answer": a})
 
     # test
     asr_hits = 0; tdetail = []
