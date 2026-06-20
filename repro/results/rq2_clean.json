@@ -1,0 +1,77 @@
+{
+  "n": 110,
+  "k_demos": 5,
+  "by_subject": {
+    "college_physics": {
+      "n": 4,
+      "ASR": 100.0,
+      "zero_shot_acc": 100.0
+    },
+    "elementary_mathematics": {
+      "n": 49,
+      "ASR": 100.0,
+      "zero_shot_acc": 100.0
+    },
+    "high_school_mathematics": {
+      "n": 4,
+      "ASR": 75.0,
+      "zero_shot_acc": 100.0
+    },
+    "high_school_microeconomics": {
+      "n": 7,
+      "ASR": 57.1,
+      "zero_shot_acc": 100.0
+    },
+    "professional_accounting": {
+      "n": 11,
+      "ASR": 72.7,
+      "zero_shot_acc": 100.0
+    },
+    "professional_law": {
+      "n": 14,
+      "ASR": 21.4,
+      "zero_shot_acc": 92.9
+    },
+    "professional_medicine": {
+      "n": 6,
+      "ASR": 66.7,
+      "zero_shot_acc": 83.3
+    }
+  },
+  "by_tier": {
+    "EASY-math": {
+      "n": 55,
+      "ASR": 98.2,
+      "zero_shot_acc": 100.0
+    },
+    "NUM-hard": {
+      "n": 22,
+      "ASR": 86.4,
+      "zero_shot_acc": 95.5
+    },
+    "CONCEPT-deep": {
+      "n": 29,
+      "ASR": 44.8,
+      "zero_shot_acc": 93.1
+    }
+  },
+  "by_difficulty": {
+    "easy": {
+      "n": 107,
+      "ASR": 80.4,
+      "zero_shot_acc": 100.0
+    },
+    "hard": {
+      "n": 3,
+      "ASR": 100.0,
+      "zero_shot_acc": 0.0
+    }
+  },
+  "mechanism_deep": {
+    "deep_n": 29,
+    "deep_ASR": 44.8,
+    "failures": 16,
+    "absorption": 9,
+    "discrimination": 7
+  }
+}
