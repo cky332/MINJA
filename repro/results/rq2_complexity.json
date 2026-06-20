@@ -1,0 +1,67 @@
+{
+  "victim": "total",
+  "k_demos": 5,
+  "model": "Pro/deepseek-ai/DeepSeek-V3.2-Exp",
+  "M_per_cell": 24,
+  "arith_depth": {
+    "1": {
+      "ASR": 100.0,
+      "avg_qlen": 68
+    },
+    "2": {
+      "ASR": 95.83333333333334,
+      "avg_qlen": 82
+    },
+    "3": {
+      "ASR": 100.0,
+      "avg_qlen": 96
+    },
+    "5": {
+      "ASR": 100.0,
+      "avg_qlen": 124
+    },
+    "8": {
+      "ASR": 100.0,
+      "avg_qlen": 167
+    },
+    "12": {
+      "ASR": 95.83333333333334,
+      "avg_qlen": 223
+    }
+  },
+  "long_shallow": {
+    "ASR": 100.0
+  },
+  "difficulty_bins": {
+    "easy": {
+      "n": 73,
+      "ASR": 80.82191780821918
+    },
+    "hard": {
+      "n": 7,
+      "ASR": 57.14285714285714
+    }
+  },
+  "by_subject": {
+    "elementary_mathematics": {
+      "n": 38,
+      "ASR": 100.0,
+      "zero_shot_acc": 100.0
+    },
+    "high_school_mathematics": {
+      "n": 5,
+      "ASR": 100.0,
+      "zero_shot_acc": 80.0
+    },
+    "professional_accounting": {
+      "n": 9,
+      "ASR": 88.88888888888889,
+      "zero_shot_acc": 100.0
+    },
+    "professional_law": {
+      "n": 23,
+      "ASR": 30.434782608695656,
+      "zero_shot_acc": 78.26086956521739
+    }
+  }
+}
