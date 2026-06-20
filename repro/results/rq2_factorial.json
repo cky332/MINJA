@@ -1,0 +1,31 @@
+{
+  "k_demos": 5,
+  "M": 30,
+  "cells": {
+    "C1_short_central": {
+      "ASR": 100.0,
+      "task_acc": 0.0,
+      "avg_qlen": 74
+    },
+    "C2_short_peripheral": {
+      "ASR": 90.0,
+      "task_acc": 10.0,
+      "avg_qlen": 89
+    },
+    "C3_long_central": {
+      "ASR": 100.0,
+      "task_acc": 0.0,
+      "avg_qlen": 384
+    },
+    "C4_long_peripheral": {
+      "ASR": 70.0,
+      "task_acc": 30.0,
+      "avg_qlen": 574
+    }
+  },
+  "main_effects": {
+    "length_effect_short_minus_long": 10.0,
+    "centrality_effect_central_minus_peripheral": 20.0
+  },
+  "verdict": "MIXED"
+}
