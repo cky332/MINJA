@@ -71,7 +71,8 @@ def main():
         row = f"{name:36s} "
         for m in MEMORIES:
             cell = next((x for x in results if x["scenario"] == name and x["memory"] == m and not x.get("realistic")), None)
-            row += f"{('ERR' if not cell or 'error' in cell else f\"{cell.get('ASR',0):.0f}\"):14s} "
+            val = "ERR" if (not cell or "error" in cell) else f"{cell.get('ASR', 0):.0f}"
+            row += f"{val:14s} "
         print(row, flush=True)
     print("\n--- realistic memory-composition (benign victim records present), BGE ---", flush=True)
     for r in results:

@@ -78,17 +78,20 @@ class BGEMemory(BaseMemory):
         idx = np.argsort(sims)[::-1][:k]
         return [self.recs[i] for i in idx]
 
-class _LCEmbeddings:
-    """LangChain Embeddings adapter -> SiliconFlow BGE with retry."""
-    def embed_documents(self, texts): return embed(list(texts))
-    def embed_query(self, text): return embed([text])[0]
+def _make_lc_embeddings():
+    from langchain_core.embeddings import Embeddings
+    class _LCEmbeddings(Embeddings):
+        """LangChain Embeddings adapter -> SiliconFlow BGE with retry."""
+        def embed_documents(self, texts): return embed(list(texts))
+        def embed_query(self, text): return embed([text])[0]
+    return _LCEmbeddings()
 
 class LangChainFAISSMemory(BaseMemory):
     name = "LangChain+FAISS"
     def __init__(self):
         from langchain_community.vectorstores import FAISS
         from langchain_core.documents import Document
-        self._FAISS = FAISS; self._Doc = Document; self._emb = _LCEmbeddings()
+        self._FAISS = FAISS; self._Doc = Document; self._emb = _make_lc_embeddings()
     def reset(self): self.vs = None; self._n = 0
     def add(self, key, record):
         doc = self._Doc(page_content=key, metadata={"rec": json.dumps(record)})
