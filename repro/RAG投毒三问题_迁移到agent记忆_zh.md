@@ -25,11 +25,19 @@ ASR%：
 
 ## 迁移实验 2（P2 本质）：词法泛化 —— verbatim vs paraphrase vs 触发词同义替换
 
-注入 victim='security'，测试 query 三档：原词 / 改写但保留'security' / 把'security'换成同义词（触发词消失）。
+注入 victim='security'，测试 query 三档：原词 / 改写但保留'security' / 把'security'换成同义词（触发词消失，如 cybersecurity）。攻击目标 = misinfo（"提到 security → 答 B"），BGE 稠密检索。
 
-<!-- FILL lexical -->
+| 测试 query 档位 | ASR | 例子 |
+|---|---:|---|
+| verbatim（原词） | **100%** | "...a liberal perspective on future energy **security**?" |
+| paraphrase（改写，保留 security） | **100%** | "...aligns with a liberal outlook on future energy **security**?" |
+| synonym（触发词换成 cybersecurity，"security"字面消失） | **100%** | "...future energy **cybersecurity**"（注：脚本二次替换把词面弄成 "cybercybersecur"，触发词被彻底破坏，结果反而更强） |
 
-（另：一般性改写的下降已在 `run_qa_paraphrase` 测过：total 90→70、security 90→80、food 80→70，掉 10–20 点。）
+**结论：MINJA 对 P2 基本免疫，远比 RAG 投毒鲁棒。** Confundo 报告 RAG 投毒"换措辞→效果腰斩(~50%)"；而 MINJA 在改写、甚至把触发词整词删掉时仍 100%。原因有两个，都和 RAG 不同：
+1. **稠密检索天然泛化**：BGE 把 "security"/"cybersecurity"/"energy security" 映到相近向量，恶意记录照样被取回——不像 BM25/词频那样绑字面。
+2. **指令长在被取回的"推理"里，不绑 query 字面**：RAG 的毒针要"query 命中→毒块进 context"；MINJA 取回的是 demo（含被劫持的 Thought + 答案 B），directive 已经焊在 demo 内部，query 怎么改写都不影响 demo 一旦被取回就生效。
+
+> 但**不是零敏感**：在更脆弱的 `ascii_shift`(QA) 目标上，改写受害 query 仍掉 10–20 点（total 90→70、security 90→80、food 80→70，见 `run_qa_paraphrase`）。即"带显式 directive 的目标(misinfo)对词法完全鲁棒；纯靠 demo 模仿的目标(ascii_shift)有残余词法敏感"。总体仍远好于 RAG 的腰斩。
 
 ## 迁移实验 3（P3 本质）：目标泛化 —— 已在统一框架里验证
 
