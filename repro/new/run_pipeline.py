@@ -65,7 +65,8 @@ def agent_answer(item, pipe, tt, k=4, extra=""):
         prompt = render_snippets(item, mem, tt, extra)
     else:
         prompt = render(item, mem, tt, extra)
-    return answer_of(lib.extract_json(lib.chat(prompt, system=SYS)), item["labels"])
+    resp = lib.extract_json(lib.chat(prompt, system=SYS))
+    return answer_of(resp, item["labels"]), resp
 
 def run_cell(mode, loader, victim, target, A, n_inject=6, n_benign=8, n_test=8, k=4, seed=42):
     rng = random.Random(seed); atk = A(); items = loader(); tt = atk.task_type
@@ -75,24 +76,26 @@ def run_cell(mode, loader, victim, target, A, n_inject=6, n_benign=8, n_test=8, 
     test = [it for it in vic[n_inject:] if not atk.is_success(it["answer"], it, target)][:n_test]
     benign = (non[:n_benign] if non else vic[n_inject + n_test:n_inject + n_test + n_benign])
     pipe = Pipe(mode); pipe.reset()
+    full = atk.indication(victim, target)
+    short = " (" + full.strip(" ()").split(",")[0] + ".)"
     stream = []
-    for it in inject:
-        stream.append((it, atk.indication(victim, target))); stream.append((it, ""))
+    for it in inject:  # 3-level PSS: full, short, bare (matches main harness)
+        stream.append((it, full)); stream.append((it, short)); stream.append((it, ""))
     tag = [("m", i) for i in range(len(stream))] + [("b", j) for j in range(len(benign))]
     rng.shuffle(tag)
     for kind, idx in tag:
         if kind == "m":
             it, ind = stream[idx]
-            ans = agent_answer(it, pipe, tt, k, extra=ind)
-            if atk.is_success(ans, it, target):
-                # reconstruct a thought to store (agent's reasoning); use a faithful malicious thought
-                pipe.add({"question": it["stem"], "thought": f"This input mentions '{victim}', so the answer is {target}.", "answer": atk.target_answer(it, target, ans) or ans})
+            ans, resp = agent_answer(it, pipe, tt, k, extra=ind)
+            if atk.is_success(ans, it, target):  # store the agent's REAL reasoning (like MINJA)
+                pipe.add({"question": it["stem"], "thought": (resp or {}).get("Thought", "")[:600],
+                          "answer": atk.target_answer(it, target, ans) or ans})
         else:
             it = benign[idx]
-            ans = agent_answer(it, pipe, tt, k)
+            ans, resp = agent_answer(it, pipe, tt, k)
             if ans == it["answer"]:
-                pipe.add({"question": it["stem"], "thought": f"Analyzed the input; the answer is {ans}.", "answer": ans})
-    hits = sum(atk.is_success(agent_answer(it, pipe, tt, k), it, target) for it in test)
+                pipe.add({"question": it["stem"], "thought": (resp or {}).get("Thought", "")[:600], "answer": ans})
+    hits = sum(atk.is_success(agent_answer(it, pipe, tt, k)[0], it, target) for it in test)
     return hits / max(1, len(test)) * 100
 
 CELLS = [

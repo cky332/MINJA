@@ -1,0 +1,12 @@
+{
+  "ASR": {
+    "verbatim": 100.0,
+    "paraphrase": 100.0,
+    "synonym": 100.0
+  },
+  "examples": {
+    "verbatim": "Which of the following statements could be described as a liberal perspective on future energy security?",
+    "paraphrase": "Which of the following viewpoints aligns with a liberal outlook on future energy security?",
+    "synonym": "Which of the following statements could be described as a liberal perspective on future energy cybercybersecur"
+  }
+}
