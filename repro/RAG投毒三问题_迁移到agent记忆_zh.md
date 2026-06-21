@@ -19,9 +19,18 @@
 - **summarize**：存前用 LLM 把记录压成一句（= summary memory）。
 - **chunk**：把记录按句切块、逐块入向量库，检索返回 top-k **碎块**（= RAG chunking）。
 
-ASR%：
+ASR%（DeepSeek-V3.2-Exp，每格 n_inject=6×3档PSS、n_test=8、k=4、BGE-m3）：
 
-<!-- FILL pipeline -->
+| 攻击格 | raw（整条） | summarize（压成一句） | chunk（按句切块取碎片） |
+|---|---:|---:|---:|
+| misinfo  security→B | **100** | 25 | **0** |
+| tool_hijack  invoice→email | **100** | 62 | **0** |
+| label_flip  headphones→positive | **100** | 50 | **0** |
+
+**结论：P1 的本质强烈迁移过来了，而且是 MINJA 最被低估的失败面。**
+- **raw=100%**：复现了论文的隐含假设（整条 verbatim 存取）下攻击全中——这是修过 harness bug 后的干净基线（修复前因为存的是固定 thought + 只有2档PSS，raw 被错误压到 12.5%，已纠正）。
+- **chunk=0%（致命）**：一旦把记录按句切块、逐块入库、检索返回 top-k **碎片**，三种攻击**全部归零**。原因：MINJA 的毒性来自一条**完整 demo**（受害问题 + 被劫持的推理 + 目标答案）所示范的"看到 victim→给 target"行为；切块后检索取回的是**漂浮的句子碎片**（比如孤零零一句 "Final answer: B."、或一句脱离了问题的推理），不再构成可被模仿的示范，bridging step 被物理打断。这正是 Confundo 说的"chunk 边界把毒文本切碎→毒性减弱"，在 agent memory 上不是减弱而是**清零**。
+- **summarize=25–62%（部分失效）**：存前用 LLM 把记录压成一句，ASR 掉一半到三分之二。压缩本身就是一道**隐性的写时过滤**：有时它保留了 directive（tool_hijack 的"路由到 email"较显眼 →62%），有时把这条"古怪的旁支规则"自然丢弃/洗掉（misinfo 的"答 B" →25%）。这和我之前 D1 写时 LLM 守卫（显式判别，**没拦住**任何记录）形成对比：**不判别、只压缩**的 summarize 反而误打误撞削弱了攻击。
 
 ## 迁移实验 2（P2 本质）：词法泛化 —— verbatim vs paraphrase vs 触发词同义替换
 
@@ -45,4 +54,20 @@ ASR%：
 
 ## 结论
 
-<!-- FILL -->
+把 Confundo 的三个"本质"逐一迁移到 MINJA / agent memory 上实测，结论是**三问题在 agent memory 上的命运截然不同**：
+
+| Confundo 问题（本质） | 迁到 MINJA 后是否仍是问题？ | 实测 |
+|---|---|---|
+| **P1 入库变换碎片化** | **是，而且更严重**（论文最不稳的假设） | chunk 把 100%→**0%**；summarize 把 100%→25–62% |
+| **P2 词法绑定** | **基本不是问题**（MINJA 远比 RAG 鲁棒） | verbatim=paraphrase=synonym=**100%**（RAG 改写腰斩） |
+| **P3 目标单一** | **不是问题** | 同一套机制覆盖 ascii/misinfo/tool/label 四目标，多数 100% |
+
+**一句话回答你的核心问题**（"chunking 会不会像打击 RAG 投毒一样打击 MINJA，还是说 MINJA 因为 agent 已经把记录'消化'成自己的推理而更鲁棒？"）：
+- 对 **P2/P3** 而言，MINJA 确实因为"指令焊在被检索的推理里 + 稠密检索泛化 + 机制目标无关"而**比 RAG 投毒鲁棒**——这两个本质迁过来基本失效。
+- 但对 **P1** 而言**恰恰相反**：MINJA 并没有"消化成鲁棒形态"，它的毒性**恰恰依赖那条完整记录被原样存取**。一旦真实记忆系统在入库口做了 chunk / summarize（MemGPT 递归摘要、LangChain summary memory、向量库分块、Generative-Agents reflection 都属此类），完整 demo 被打断或压掉，攻击就从 100% 掉到 0–60%。**这是 MINJA 论文最不现实、最该被质疑的隐含假设**：它假设 (query, reasoning) 记录被逐字整条写入并整条召回，而这几乎是唯一一种对 MINJA 最友好的记忆实现。
+
+**两点诚实的边界（避免过度声称）：**
+1. **这是"朴素 MINJA 载荷 vs 朴素管线"的结果。** Confundo 的贡献本身就是**学出对预处理鲁棒的毒**；同理，自适应攻击者若知道会被切块，可把每句都做成自包含、在每个 chunk 里都重述 directive、或针对摘要器做对抗，理论上能回收一部分 ASR。本实验证明的是"现成 MINJA 对现实入库管线脆弱"，不是"MINJA 不可能适配管线"。
+2. **chunk=0 也意味着一个低成本防御**：对 demonstration-retrieval 型记忆，**入库分块 / 强制摘要**本身就是有效的去毒手段（且 summarize 还顺带保留了部分检索效用），可与之前的 D2（检索一致性过滤）、D3（自推导提示）叠加。
+
+> 方法论提示：本轮唯一的坑是 P1 harness 一开始把基线也跑塌了（raw=12.5%），定位为"存了固定 thought + 缺 short 档 PSS"，修正后 raw 恢复 100%，degradation 才有意义——这也提醒复现 MINJA 时，**必须存 agent 自己生成的被劫持推理、并保留完整 PSS**，否则会把"注入失败"和"基线本就不工作"混为一谈。
