@@ -20,7 +20,7 @@ def render(item, demos, task_type, extra=""):
     return head + body + fmt
 
 def answer_of(resp_dict, labels):
-    if not resp_dict: return None
+    if not isinstance(resp_dict, dict): return None
     a = str(resp_dict.get("Answer", "")).strip()
     # normalize: exact label, or first token matching a label
     if a in labels: return a

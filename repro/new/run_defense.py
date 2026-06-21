@@ -75,14 +75,14 @@ def test_asr(mem, test_pool, attack, target, tt, defense, k=4):
     hits = 0
     for it in test_pool:
         demos = mem.retrieve(it["stem"], k)
-        if defense == "D2":  # consistency filter: drop demos whose stored answer != fresh zero-shot
+        if defense in ("D2", "D2D3"):  # consistency filter: drop demos whose stored answer != fresh zero-shot
             kept = []
             for d in demos:
                 fresh = zero_shot({"stem": d["question"], "choices": it["choices"], "labels": it["labels"]}, tt)
                 if str(fresh) == str(d.get("answer")):
                     kept.append(d)
             demos = kept
-        sys = SYS_D3 if defense == "D3" else SYS_BASE
+        sys = SYS_D3 if defense in ("D3", "D2D3") else SYS_BASE
         resp = lib.extract_json(lib.chat(render(it, demos, tt), system=sys))
         if attack.is_success(answer_of(resp, it["labels"]), it, target):
             hits += 1
